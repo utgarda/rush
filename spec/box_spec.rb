@@ -49,8 +49,9 @@ describe Rush::Box do
 		@box.command_with_environment('cmd', { :a => 'a`b' }).should == "export a=\"a\\\`b\"\ncmd"
 	end
 
-	it "converts environment variables to_s" do
-		@box.command_with_environment('cmd', { :a => nil, :b => 123 }).should == "export a=\"\"\nexport b=\"123\"\ncmd"
+	it "converts environment variables to_s" do        
+        expected_strings = ["export a=\"\"\nexport b=\"123\"\ncmd", "export b=\"123\"\nexport a=\"\"\ncmd"]
+		expected_strings.should include(@box.command_with_environment('cmd', { :a => nil, :b => 123 }))
 	end
 
 	it "sets the environment variables from the provided hash" do
