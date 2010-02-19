@@ -162,7 +162,7 @@ describe Rush::Connection::Local do
 		system "cd #{@sandbox_dir}; touch .killme"
 		@con.purge(@sandbox_dir)
 		File.exists?(@sandbox_dir).should be_true
-		`cd #{@sandbox_dir}; ls -lA | grep -v total | wc -l`.to_i.should == 0
+		`cd #{@sandbox_dir}; env LANG=C ls -lA | grep -v total | wc -l`.to_i.should == 0
 	end
 
 	it "create_dir creates a directory" do
@@ -322,7 +322,7 @@ EOPS
 	end
 
 	it "executes a bash command, raising and error (with stderr as the message) when return value is nonzero" do
-		lambda { @con.bash("no_such_bin") }.should raise_error(Rush::BashFailed, /command not found/)
+		lambda { @con.bash("env LANG=C no_such_bin") }.should raise_error(Rush::BashFailed, /(command not found|no such file or directory)/i)
 	end
 
 	it "executes a bash command as another user using sudo" do

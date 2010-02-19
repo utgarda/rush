@@ -81,7 +81,7 @@ class Rush::Box
 	def command_with_environment(command, env)   # :nodoc:
 		return command unless env
 
-		vars = env.map do |key, value|
+		vars = env.sort_by{ |key, value| key.to_s }.map do |key, value|
 			escaped = value.to_s.gsub('"', '\\"').gsub('`', '\\\`')
 			"export #{key}=\"#{escaped}\""
 		end
