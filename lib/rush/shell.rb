@@ -1,7 +1,7 @@
 require 'readline'
 
-# Rush::Shell is used to create an interactive shell.  It is invoked by the rush binary.
 module Rush
+	# Rush::Shell is used to create an interactive shell.  It is invoked by the rush binary.
 	class Shell
 		attr_accessor :suppress_output
 		# Set up the user's environment, including a pure binding into which

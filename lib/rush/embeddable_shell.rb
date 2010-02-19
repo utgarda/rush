@@ -12,7 +12,7 @@ module Rush
 			shell.suppress_output = suppress_output
 		end
 		
-		# evalutes and unkown method call agains the rush shell
+		# evalutes any unkown method call against the rush shell
 		def method_missing(sym, *args, &block)
 			shell.execute sym.to_s
 			$last_res
