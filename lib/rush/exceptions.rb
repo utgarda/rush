@@ -14,8 +14,16 @@ module Rush
 	# The entry (file or dir) referenced does not exist.  Message is the entry's full path.
 	class DoesNotExist < Exception; end
 
-	# The bash command had a non-zero return value.  Message is stderr.
-	class BashFailed < Exception; end
+	# The bash command had a non-zero return value.  Message is stderr. stdout is also available.
+	class BashFailed < Exception
+		def stderr; to_s; end
+		attr_reader :stdout
+
+		def initialize(err, out)
+			super(err)
+			@stdout = out
+		end
+	end
 
 	# There's already an entry by the given name in the given dir.
 	class NameAlreadyExists < Exception; end

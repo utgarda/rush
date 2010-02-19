@@ -325,7 +325,7 @@ class Rush::Connection::Local
 		retval = sh.status
 		sh.close!
 
-		raise(Rush::BashFailed, err) if retval != 0
+		raise Rush::BashFailed.new(err, out) if retval != 0
 
 		out
 	end

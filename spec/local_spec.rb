@@ -321,8 +321,13 @@ EOPS
 		@con.bash("echo test").should == "test\n"
 	end
 
-	it "executes a bash command, raising and error (with stderr as the message) when return value is nonzero" do
-		lambda { @con.bash("env LANG=C no_such_bin") }.should raise_error(Rush::BashFailed, /(command not found|no such file or directory)/i)
+	it "executes a bash command, raising an error (with stderr as #stderr and stdout as #stdout) when return value is nonzero" do
+		lambda { @con.bash("env LANG=C no_such_bin") }.should raise_error(Rush::BashFailed) do |error|
+      (error.stdout.should == '') and (error.stderr.should =~ /(command not found|no such file or directory)/i)
+    end
+		lambda { @con.bash("echo test && env LANG=C no_such_bin") }.should raise_error(Rush::BashFailed) do |error|
+      (error.stdout.should =~ /test/) and (error.stderr.should =~ /(command not found|no such file or directory)/i)
+    end
 	end
 
 	it "executes a bash command as another user using sudo" do
