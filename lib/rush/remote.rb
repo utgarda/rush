@@ -118,22 +118,23 @@ class Rush::Connection::Remote
 		raise Rush::NotAuthorized if code == "401"
 
 		if code == "400"	
-			klass, message = parse_exception(body)
-			raise klass, "#{host}:#{message}"
+			klass, stderr, stdout = parse_exception(body)
+			raise Rush::BashFailed.new(stderr, stdout) if klass == Rush::BashFailed
+			raise klass, "#{host}:#{stderr}"
 		end
 
 		raise Rush::FailedTransmit if code != "200"
 
-		body
+		body.unpack('M').to_s.strip
 	end
 
 	# Parse an exception returned from the server, with the class name on the
-	# first line and the message on the second.
+	# first line, stderr/message on the second and stdout (if any) on the third.
 	def parse_exception(body)
-		klass, message = body.split("\n", 2)
+		klass, stderr, stdout = body.split("\n", 3)
 		raise "invalid exception class: #{klass}" unless klass.match(/^Rush::[A-Za-z]+$/)
 		klass = Object.module_eval(klass)
-		[ klass, message.strip ]
+		[ klass, stderr.unpack('M').to_s.strip, stdout.unpack('M').to_s.strip ]
 	end
 
 	# Set up the tunnel if it is not already running.

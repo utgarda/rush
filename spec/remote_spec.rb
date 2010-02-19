@@ -115,8 +115,8 @@ describe Rush::Connection::Local do
 		lambda { @con.process_result("501", "") }.should raise_error(Rush::FailedTransmit)
 	end
 
-	it "parse_exception takes the class from the first line and the message from the second" do
-		@con.parse_exception("Rush::DoesNotExist\nthe message\n").should == [ Rush::DoesNotExist, "the message" ]
+	it "parse_exception takes the class from the first line, stderr/message from the second and stdout from the third" do
+		@con.parse_exception("Rush::BashFailed\nstderr=\nstdout=\n").should == [ Rush::BashFailed, "stderr", "stdout" ]
 	end
 
 	it "parse_exception rejects unrecognized exceptions" do

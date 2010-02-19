@@ -33,11 +33,11 @@ class RushHandler < Mongrel::HttpHandler
 				result = box.connection.receive(params)
 
 				response.start(200) do |head, out|
-					out.write result
+					out.write("#{[result].pack('M')}\n")
 				end
 			rescue Rush::Exception => e
 				response.start(400) do |head, out|
-					out.write "#{e.class}\n#{e.message}\n"
+					out.write("#{e.class}\n#{[e.stderr].pack('M')}\n#{[e.stdout].pack('M')}\n")
 				end
 			end
 		end
