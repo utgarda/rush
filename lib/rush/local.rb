@@ -311,22 +311,14 @@ class Rush::Connection::Local
 		return bash_background(command, user, reset_environment) if background
 
 		require 'session'
-
 		sh = Session::Bash.new
-
-		shell = reset_environment ? "env -i bash" : "bash"
-
-		if user and user != ""
-			out, err = sh.execute "cd /; sudo -H -u #{user} \"#{shell}\"", :stdin => command
-		else
-			out, err = sh.execute shell, :stdin => command
-		end
-
+		cmd = reset_environment ? "env -i bash" : "bash"
+		cmd = "cd /; sudo -H -u #{user} \"#{cmd}\"" if user and user != ""
+		out, err = sh.execute(cmd, :stdin => command)
 		retval = sh.status
 		sh.close!
 
 		raise Rush::BashFailed.new(err, out) if retval != 0
-
 		out
 	end
 
