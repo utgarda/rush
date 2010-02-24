@@ -38,20 +38,20 @@ class Rush::Connection::Remote
 		transmit(:action => 'create_dir', :full_path => full_path)
 	end
 
-	def rename(path, name, new_name)
-		transmit(:action => 'rename', :path => path, :name => name, :new_name => 'new_name')
+	def rename(path, name, new_name, force)
+		transmit(:action => 'rename', :path => path, :name => name, :new_name => new_name, :force => force)
 	end
 
-	def copy(src, dst)
-		transmit(:action => 'copy', :src => src, :dst => dst)
+	def copy(src, dst, force)
+		transmit(:action => 'copy', :src => src, :dst => dst, :force => force)
 	end
 
 	def read_archive(full_path)
 		transmit(:action => 'read_archive', :full_path => full_path)
 	end
 
-	def write_archive(archive, dir)
-		transmit(:action => 'write_archive', :dir => dir, :payload => archive)
+	def write_archive(archive, dir, force)
+		transmit(:action => 'write_archive', :dir => dir, :payload => archive, :force => force)
 	end
 
 	def index(base_path, glob)

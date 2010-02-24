@@ -61,18 +61,18 @@ class Rush::Connection::Local
 	end
 
 	# Rename an entry within a dir.
-	def rename(path, name, new_name)
+	def rename(path, name, new_name, force)
 		raise(Rush::NameCannotContainSlash, "#{path} rename #{name} to #{new_name}") if new_name.match(/\//)
 		old_full_path = "#{path}/#{name}"
 		new_full_path = "#{path}/#{new_name}"
-		raise(Rush::NameAlreadyExists, "#{path} rename #{name} to #{new_name}") if ::File.exists?(new_full_path)
-		FileUtils.mv(old_full_path, new_full_path)
+		raise(Rush::NameAlreadyExists, "#{path} rename #{name} to #{new_name}") if (::File.exists?(new_full_path) and not force)
+		FileUtils.mv(old_full_path, new_full_path, :force => force)
 		true
 	end
 
 	# Copy ane entry from one path to another.
-	def copy(src, dst)
-		FileUtils.cp_r(src, dst)
+	def copy(src, dst, force)
+		FileUtils.cp_r(src, dst, :remove_destination => force)
 		true
 	rescue Errno::ENOENT
 		raise Rush::DoesNotExist, File.dirname(dst)
@@ -80,7 +80,7 @@ class Rush::Connection::Local
 		raise Rush::DoesNotExist, src
 	end
 
-	# Create an in-memory archive (tgz) of a file or dir, which can be
+	# Create an in-memory archive (tar) of a file or dir, which can be
 	# transmitted to another server for a copy or move.  Note that archive
 	# operations have the dir name implicit in the archive.
 	def read_archive(full_path)
@@ -88,8 +88,8 @@ class Rush::Connection::Local
 	end
 
 	# Extract an in-memory archive to a dir.
-	def write_archive(archive, dir)
-		IO.popen("cd #{Rush::quote(dir)}; tar x", "w") do |p|
+	def write_archive(archive, dir, force)
+		IO.popen("cd #{Rush::quote(dir)}; tar x #{'--keep-old-files' unless force}", "w") do |p|
 			p.write archive
 		end
 	end

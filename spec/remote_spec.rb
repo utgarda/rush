@@ -43,13 +43,13 @@ describe Rush::Connection::Local do
 	end
 
 	it "transmits rename" do
-		@con.should_receive(:transmit).with(:action => 'rename', :path => 'path', :name => 'name', :new_name => 'new_name')
-		@con.rename('path', 'name', 'new_name')
+		@con.should_receive(:transmit).with(:action => 'rename', :path => 'path', :name => 'name', :new_name => 'new_name', :force => false)
+		@con.rename('path', 'name', 'new_name', false)
 	end
 
 	it "transmits copy" do
-		@con.should_receive(:transmit).with(:action => 'copy', :src => 'src', :dst => 'dst')
-		@con.copy('src', 'dst')
+		@con.should_receive(:transmit).with(:action => 'copy', :src => 'src', :dst => 'dst', :force => false)
+		@con.copy('src', 'dst', false)
 	end
 
 	it "transmits read_archive" do
@@ -58,8 +58,8 @@ describe Rush::Connection::Local do
 	end
 
 	it "transmits write_archive" do
-		@con.should_receive(:transmit).with(:action => 'write_archive', :dir => 'dir', :payload => 'archive')
-		@con.write_archive('archive', 'dir')
+		@con.should_receive(:transmit).with(:action => 'write_archive', :dir => 'dir', :payload => 'archive', :force => false)
+		@con.write_archive('archive', 'dir', false)
 	end
 
 	it "transmits index" do
