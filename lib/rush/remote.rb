@@ -105,6 +105,7 @@ class Rush::Connection::Remote
 		req.basic_auth config.credentials_user, config.credentials_password
 
 		Net::HTTP.start(tunnel.host, tunnel.port) do |http|
+			http.read_timeout = 15*60
 			res = http.request(req, payload)
 			process_result(res.code, res.body)
 		end
