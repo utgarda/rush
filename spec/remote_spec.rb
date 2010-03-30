@@ -43,13 +43,13 @@ describe Rush::Connection::Local do
 	end
 
 	it "transmits rename" do
-		@con.should_receive(:transmit).with(:action => 'rename', :path => 'path', :name => 'name', :new_name => 'new_name')
-		@con.rename('path', 'name', 'new_name')
+		@con.should_receive(:transmit).with(:action => 'rename', :path => 'path', :name => 'name', :new_name => 'new_name', :force => false)
+		@con.rename('path', 'name', 'new_name', false)
 	end
 
 	it "transmits copy" do
-		@con.should_receive(:transmit).with(:action => 'copy', :src => 'src', :dst => 'dst')
-		@con.copy('src', 'dst')
+		@con.should_receive(:transmit).with(:action => 'copy', :src => 'src', :dst => 'dst', :force => false)
+		@con.copy('src', 'dst', false)
 	end
 
 	it "transmits read_archive" do
@@ -58,8 +58,8 @@ describe Rush::Connection::Local do
 	end
 
 	it "transmits write_archive" do
-		@con.should_receive(:transmit).with(:action => 'write_archive', :dir => 'dir', :payload => 'archive')
-		@con.write_archive('archive', 'dir')
+		@con.should_receive(:transmit).with(:action => 'write_archive', :dir => 'dir', :payload => 'archive', :force => false)
+		@con.write_archive('archive', 'dir', false)
 	end
 
 	it "transmits index" do
@@ -115,8 +115,8 @@ describe Rush::Connection::Local do
 		lambda { @con.process_result("501", "") }.should raise_error(Rush::FailedTransmit)
 	end
 
-	it "parse_exception takes the class from the first line and the message from the second" do
-		@con.parse_exception("Rush::DoesNotExist\nthe message\n").should == [ Rush::DoesNotExist, "the message" ]
+	it "parse_exception takes the class from the first line, stderr/message from the second and stdout from the third" do
+		@con.parse_exception("Rush::BashFailed\nstderr=\nstdout=\n").should == [ Rush::BashFailed, "stderr", "stdout" ]
 	end
 
 	it "parse_exception rejects unrecognized exceptions" do

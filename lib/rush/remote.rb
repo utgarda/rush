@@ -38,20 +38,20 @@ class Rush::Connection::Remote
 		transmit(:action => 'create_dir', :full_path => full_path)
 	end
 
-	def rename(path, name, new_name)
-		transmit(:action => 'rename', :path => path, :name => name, :new_name => 'new_name')
+	def rename(path, name, new_name, force)
+		transmit(:action => 'rename', :path => path, :name => name, :new_name => new_name, :force => force)
 	end
 
-	def copy(src, dst)
-		transmit(:action => 'copy', :src => src, :dst => dst)
+	def copy(src, dst, force)
+		transmit(:action => 'copy', :src => src, :dst => dst, :force => force)
 	end
 
 	def read_archive(full_path)
 		transmit(:action => 'read_archive', :full_path => full_path)
 	end
 
-	def write_archive(archive, dir)
-		transmit(:action => 'write_archive', :dir => dir, :payload => archive)
+	def write_archive(archive, dir, force)
+		transmit(:action => 'write_archive', :dir => dir, :payload => archive, :force => force)
 	end
 
 	def index(base_path, glob)
@@ -105,6 +105,7 @@ class Rush::Connection::Remote
 		req.basic_auth config.credentials_user, config.credentials_password
 
 		Net::HTTP.start(tunnel.host, tunnel.port) do |http|
+			http.read_timeout = 15*60
 			res = http.request(req, payload)
 			process_result(res.code, res.body)
 		end
@@ -118,22 +119,23 @@ class Rush::Connection::Remote
 		raise Rush::NotAuthorized if code == "401"
 
 		if code == "400"	
-			klass, message = parse_exception(body)
-			raise klass, "#{host}:#{message}"
+			klass, stderr, stdout = parse_exception(body)
+			raise Rush::BashFailed.new(stderr, stdout) if klass == Rush::BashFailed
+			raise klass, "#{host}:#{stderr}"
 		end
 
 		raise Rush::FailedTransmit if code != "200"
 
-		body
+		body.unpack('M').to_s.strip
 	end
 
 	# Parse an exception returned from the server, with the class name on the
-	# first line and the message on the second.
+	# first line, stderr/message on the second and stdout (if any) on the third.
 	def parse_exception(body)
-		klass, message = body.split("\n", 2)
+		klass, stderr, stdout = body.split("\n", 3)
 		raise "invalid exception class: #{klass}" unless klass.match(/^Rush::[A-Za-z]+$/)
 		klass = Object.module_eval(klass)
-		[ klass, message.strip ]
+		[ klass, stderr.unpack('M').to_s.strip, stdout.unpack('M').to_s.strip ]
 	end
 
 	# Set up the tunnel if it is not already running.

@@ -162,7 +162,7 @@ describe Rush::Connection::Local do
 		system "cd #{@sandbox_dir}; touch .killme"
 		@con.purge(@sandbox_dir)
 		File.exists?(@sandbox_dir).should be_true
-		`cd #{@sandbox_dir}; ls -lA | grep -v total | wc -l`.to_i.should == 0
+		`cd #{@sandbox_dir}; env LANG=C ls -lA | grep -v total | wc -l`.to_i.should == 0
 	end
 
 	it "create_dir creates a directory" do
@@ -173,7 +173,9 @@ describe Rush::Connection::Local do
 
 	it "rename to rename entries within a dir" do
 		system "touch #{@sandbox_dir}/a"
-		@con.rename(@sandbox_dir, 'a', 'b')
+		system "touch #{@sandbox_dir}/b"
+		lambda { @con.rename(@sandbox_dir, 'a', 'b', false) }.should raise_error(Rush::NameAlreadyExists, /rename a to b$/)
+		@con.rename(@sandbox_dir, 'a', 'b', true)
 		File.exists?("#{@sandbox_dir}/a").should be_false
 		File.exists?("#{@sandbox_dir}/b").should be_true
 	end
@@ -181,17 +183,17 @@ describe Rush::Connection::Local do
 	it "copy to copy an entry to another dir on the same box" do
 		system "mkdir #{@sandbox_dir}/subdir"
 		system "touch #{@sandbox_dir}/a"
-		@con.copy("#{@sandbox_dir}/a", "#{@sandbox_dir}/subdir")
+		@con.copy("#{@sandbox_dir}/a", "#{@sandbox_dir}/subdir", true)
 		File.exists?("#{@sandbox_dir}/a").should be_true
 		File.exists?("#{@sandbox_dir}/subdir/a").should be_true
 	end
 
 	it "copy raises DoesNotExist with source path if it doesn't exist or otherwise can't be accessed" do
-		lambda { @con.copy('/does/not/exist', '/tmp') }.should raise_error(Rush::DoesNotExist, '/does/not/exist')
+		lambda { @con.copy('/does/not/exist', '/tmp', false) }.should raise_error(Rush::DoesNotExist, '/does/not/exist')
 	end
 
 	it "copy raises DoesNotExist with destination path if it can't access the destination" do
-		lambda { @con.copy('/tmp', '/does/not/exist') }.should raise_error(Rush::DoesNotExist, '/does/not')
+		lambda { @con.copy('/tmp', '/does/not/exist', false) }.should raise_error(Rush::DoesNotExist, '/does/not')
 	end
 
 	it "read_archive to pull an archive of a dir into a byte stream" do
@@ -207,7 +209,7 @@ describe Rush::Connection::Local do
 	it "write_archive to turn a byte stream into a dir" do
 		system "cd #{@sandbox_dir}; mkdir -p a; touch a/b; tar cf xfer.tar a; mkdir dst"
 		archive = File.read("#{@sandbox_dir}/xfer.tar")
-		@con.write_archive(archive, "#{@sandbox_dir}/dst")
+		@con.write_archive(archive, "#{@sandbox_dir}/dst", false)
 		File.directory?("#{@sandbox_dir}/dst/a").should be_true
 		File.exists?("#{@sandbox_dir}/dst/a/b").should be_true
 	end
@@ -215,7 +217,7 @@ describe Rush::Connection::Local do
 	it "write_archive works for paths with spaces" do
 		system "cd #{@sandbox_dir}; mkdir -p a; touch a/b; tar cf xfer.tar a; mkdir with\\ space"
 		archive = File.read("#{@sandbox_dir}/xfer.tar")
-		@con.write_archive(archive, "#{@sandbox_dir}/with space")
+		@con.write_archive(archive, "#{@sandbox_dir}/with space", false)
 		File.directory?("#{@sandbox_dir}/with space/a").should be_true
 		File.exists?("#{@sandbox_dir}/with space/a/b").should be_true
 	end
@@ -321,8 +323,13 @@ EOPS
 		@con.bash("echo test").should == "test\n"
 	end
 
-	it "executes a bash command, raising and error (with stderr as the message) when return value is nonzero" do
-		lambda { @con.bash("no_such_bin") }.should raise_error(Rush::BashFailed, /command not found/)
+	it "executes a bash command, raising an error (with stderr as #stderr and stdout as #stdout) when return value is nonzero" do
+		lambda { @con.bash("env LANG=C no_such_bin") }.should raise_error(Rush::BashFailed) do |error|
+      (error.stdout.should == '') and (error.stderr.should =~ /(command not found|no such file or directory)/i)
+    end
+		lambda { @con.bash("echo test && env LANG=C no_such_bin") }.should raise_error(Rush::BashFailed) do |error|
+      (error.stdout.should =~ /test/) and (error.stderr.should =~ /(command not found|no such file or directory)/i)
+    end
 	end
 
 	it "executes a bash command as another user using sudo" do

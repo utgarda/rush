@@ -54,6 +54,10 @@ describe Rush::Box do
 		expected_strings.should include(@box.command_with_environment('cmd', { :a => nil, :b => 123 }))
 	end
 
+	it "pushes environment variables in order" do
+		@box.command_with_environment('cmd', { :b => 'b', :a => 'a' }).should == "export a=\"a\"\nexport b=\"b\"\ncmd"
+	end
+
 	it "sets the environment variables from the provided hash" do
 		@box.connection.stub!(:bash)
 		@box.should_receive(:command_with_environment).with('cmd', { 1 => 2 })

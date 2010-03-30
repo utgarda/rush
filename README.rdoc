@@ -77,6 +77,8 @@ Created by Adam Wiggins
 
 Patches contributed by Chihiro Ito, Gabriel Ware, Michael Schutte, Ricardo Chimal Jr., and Nicholas Schlueter, Pedro Belo, and Martin Kuehl
 
+Forked by Aleksey Palazhchenko.
+
 Logo by James Lindenbaum
 
 Released under the MIT License: http://www.opensource.org/licenses/mit-license.php

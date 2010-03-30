@@ -85,8 +85,9 @@ class Rush::Entry
 
 	# Rename an entry to another name within the same dir.  The object's name
 	# will be updated to match the change on the filesystem.
-	def rename(new_name)
-		connection.rename(@path, @name, new_name)
+	# If +force+ is true, it will overwrite existed entry.
+	def rename(new_name, force = false)
+		connection.rename(@path, @name, new_name, force)
 		@name = new_name
 		self
 	end
@@ -94,23 +95,25 @@ class Rush::Entry
 	# Rename an entry to another name within the same dir.  The existing object
 	# will not be affected, but a new object representing the newly-created
 	# entry will be returned.
-	def duplicate(new_name)
+	# If +force+ is true, it will overwrite existed entry.
+	def duplicate(new_name, force = false)
 		raise Rush::NameCannotContainSlash if new_name.match(/\//)
 		new_full_path = "#{@path}/#{new_name}"
-		connection.copy(full_path, new_full_path)
+		connection.copy(full_path, new_full_path, force)
 		self.class.new(new_full_path, box)
 	end
 
 	# Copy the entry to another dir.  Returns an object representing the new
 	# copy.
-	def copy_to(dir)
+	# If +force+ is true, it will overwrite existed entry.
+	def copy_to(dir, force = false)
 		raise Rush::NotADir unless dir.class == Rush::Dir
 
 		if box == dir.box
-			connection.copy(full_path, dir.full_path)
+			connection.copy(full_path, dir.full_path, force)
 		else
 			archive = connection.read_archive(full_path)
-			dir.box.connection.write_archive(archive, dir.full_path)
+			dir.box.connection.write_archive(archive, dir.full_path, force)
 		end
 
 		new_full_path = "#{dir.full_path}#{name}"
@@ -119,8 +122,9 @@ class Rush::Entry
 
 	# Move the entry to another dir.  The object will be updated to show its new
 	# location.
-	def move_to(dir)
-		moved = copy_to(dir)
+	# If +force+ is true, it will overwrite existed entry.
+	def move_to(dir, force = false)
+		moved = copy_to(dir, force)
 		destroy
 		mimic(moved)
 	end
