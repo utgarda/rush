@@ -61,7 +61,7 @@ class Rush::Connection::Local
 	end
 
 	# Rename an entry within a dir.
-	def rename(path, name, new_name, force)
+	def rename(path, name, new_name, force=false)
 		raise(Rush::NameCannotContainSlash, "#{path} rename #{name} to #{new_name}") if new_name.match(/\//)
 		old_full_path = "#{path}/#{name}"
 		new_full_path = "#{path}/#{new_name}"
@@ -179,7 +179,7 @@ class Rush::Connection::Local
 		uid = uid.to_i
 
 		return @uid_map[uid] if !@uid_map[uid].nil?
-		
+
 		begin
 			record = Etc.getpwuid(uid)
 		rescue ArgumentError
@@ -349,7 +349,7 @@ class Rush::Connection::Local
 	def close_all_descriptors(keep_open = [])
 		3.upto(256) do |fd|
 			next if keep_open.include?(fd)
-			IO::new(fd).close rescue nil
+			IO::new(fd,"r").close rescue nil
 		end
 	end
 
@@ -370,10 +370,10 @@ class Rush::Connection::Local
 			when 'destroy'        then destroy(params[:full_path])
 			when 'purge'          then purge(params[:full_path])
 			when 'create_dir'     then create_dir(params[:full_path])
-			when 'rename'         then rename(params[:path], params[:name], params[:new_name], params[:force])
-			when 'copy'           then copy(params[:src], params[:dst], params[:force])
+			when 'rename'         then rename(params[:path], params[:name], params[:new_name], params.key?(:force) ? params[:force] : false)
+			when 'copy'           then copy(params[:src], params[:dst], params.key?(:force) ? params[:force] : false)
 			when 'read_archive'   then read_archive(params[:full_path])
-			when 'write_archive'  then write_archive(params[:payload], params[:dir], params[:force])
+			when 'write_archive'  then write_archive(params[:payload], params[:dir], params.key?(:force) ? params[:force] : false)
 			when 'index'          then index(params[:base_path], params[:glob]).join("\n") + "\n"
 			when 'stat'           then YAML.dump(stat(params[:full_path]))
 			when 'set_access'     then set_access(params[:full_path], Rush::Access.from_hash(params))
